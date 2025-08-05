@@ -1,0 +1,32 @@
+{
+  "version": "5",
+  "specifiers": {
+    "npm:@types/node@*": "22.13.4",
+    "npm:hjson@^3.2.2": "3.2.2",
+    "npm:jq-web@~0.6.2": "0.6.2"
+  },
+  "npm": {
+    "@types/node@22.13.4": {
+      "integrity": "sha512-ywP2X0DYtX3y08eFVx5fNIw7/uIv8hYUKgXoK8oayJlLnKcRfEYCxWMVE1XagUdVtCJlZT1AU4LXEABW+L1Peg==",
+      "dependencies": [
+        "undici-types"
+      ]
+    },
+    "hjson@3.2.2": {
+      "integrity": "sha512-MkUeB0cTIlppeSsndgESkfFD21T2nXPRaBStLtf3cAYA2bVEFdXlodZB0TukwZiobPD1Ksax5DK4RTZeaXCI3Q==",
+      "bin": true
+    },
+    "jq-web@0.6.2": {
+      "integrity": "sha512-+7XvjBYwTx4vP5PYkf6Q6orubO/v+UgMU6By1GritrmShr9QpT3UKa4ANzXWQfhdqtBnQYXsm7ZNbdIHT6tYpQ=="
+    },
+    "undici-types@6.20.0": {
+      "integrity": "sha512-Ny6QZ2Nju20vw1SRHe3d9jVu6gJ+4e3+MMpqu7pqE5HT6WsTSlce++GQmK5UXS8mzV8DSYHrQH+Xrf2jVcuKNg=="
+    }
+  },
+  "workspace": {
+    "dependencies": [
+      "npm:hjson@^3.2.2",
+      "npm:jq-web@~0.6.2"
+    ]
+  }
+}
