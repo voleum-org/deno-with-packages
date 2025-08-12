@@ -48,14 +48,15 @@ let
         mkdir -p $OUT_PATH
         tar -xzf $src -C $OUT_PATH --strip-components=1
 
+        SUBSET_FILTER='to_entries | map(select(.key == "version" or .key == "bin" or .key == "dependencies" or .key == "peerDependencies")) | from_entries'
+        PACKAGE_SUBSET=$(${pkgs.jq}/bin/jq "$SUBSET_FILTER" $OUT_PATH/package.json)
+
         cat > $OUT_PATH/../registry.json <<EOF
 {
   "name": "${name}",
   "dist-tags": {},
   "versions": {
-    "${version}": {
-      "version": "${version}"
-    }
+    "${version}": $PACKAGE_SUBSET
   }
 }
 EOF
