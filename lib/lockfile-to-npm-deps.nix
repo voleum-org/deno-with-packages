@@ -28,7 +28,7 @@ let
   # Create derivation for a single npm package
   mkNpmDep = key: value:
     let
-      match = builtins.match "(.+)@(.+)" key;
+      match = builtins.match "(@?[^@]+)@([^_]+).*" key;
       name = builtins.elemAt match 0;
       version = builtins.elemAt match 1;
     in
