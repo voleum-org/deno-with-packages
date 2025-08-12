@@ -48,6 +48,18 @@ let
         mkdir -p $OUT_PATH
         tar -xzf $src -C $OUT_PATH --strip-components=1
 
+        cat > $OUT_PATH/../registry.json <<EOF
+{
+  "name": "${name}",
+  "dist-tags": {},
+  "versions": {
+    "${version}": {
+      "version": "${version}"
+    }
+  }
+}
+EOF
+
         runHook postInstall
       '';
     };
