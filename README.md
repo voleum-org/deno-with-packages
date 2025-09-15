@@ -1,13 +1,17 @@
 # Deno with packages
 
-This flake provides utilities for managing Deno dependencies with Nix,
+This flake [part](flake.parts) provides utilities for managing Deno dependencies with Nix.
+
+Features:
+
 - reading multiple lock files
 - creating a derivation per Deno dependency
 - combining those into a single derivation
-- installing shared cache into `DENO_DIR`
+- wrapping `deno` executable to have it install the cache
+- keeping cache in `<flake root>/.deno_cache`
 
 Currently only NPM dependencies are recognized.
 
 ## Usage
 
-See `flake.nix`
+See `example/flake.nix`
