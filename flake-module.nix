@@ -65,8 +65,9 @@ in
               match = builtins.match "(@?[^@]+)@([^_]+).*" key;
               name = builtins.elemAt match 0;
               version = builtins.elemAt match 1;
-            in
-              pkgs.stdenv.mkDerivation {
+              cachePath = "npm/${registryHostname}/${name}";
+            in {
+              drv = pkgs.stdenv.mkDerivation {
                 pname = "deno-npm-${builtins.replaceStrings ["@" "/"] ["" "-"] name}";
                 version = version;
                 src = mkTarballDrv {
@@ -77,28 +78,16 @@ in
                 installPhase = ''
                   runHook preInstall
   
-                  export OUT_PATH="$out/npm/${registryHostname}/${name}/${version}"
+                  export OUT_PATH="$out/${cachePath}/${version}"
   
                   mkdir -p $OUT_PATH
                   tar -xzf $src -C $OUT_PATH --strip-components=1
-  
-                  SUBSET_FILTER='to_entries | map(select(.key == "version" or .key == "bin" or .key == "dependencies" or .key == "peerDependencies")) | from_entries'
-                  PACKAGE_SUBSET=$(${pkgs.jq}/bin/jq "$SUBSET_FILTER" $OUT_PATH/package.json)
-  
-                  cat > $OUT_PATH/../registry.json <<EOF
-                  {
-                    "name": "${name}",
-                    "dist-tags": {},
-                    "versions": {
-                      "${version}": $PACKAGE_SUBSET
-                    }
-                  }
-                  EOF
 
                   runHook postInstall
                 '';
               };
-
+              inherit name cachePath;
+            };
         in
           pkgs.lib.mapAttrsToList mkNpmDep npmDeps;
 
@@ -109,11 +98,41 @@ in
               inherit pkgs lockfile registryHostname; 
             })
             lockfiles;
-        in
-          pkgs.symlinkJoin {
-            name = "deno-shared-cache";
-            paths = allNpmDeps;
+          sharedCacheBase = pkgs.symlinkJoin {
+            name = "deno-shared-cache-base";
+            paths = map (d: d.drv) allNpmDeps;
           };
+        in
+          pkgs.runCommand "deno-shared-cache" {} ''
+            runHook preInstall
+
+            mkdir -p $out
+            chmod -R +w $out
+
+            cp -rs ${sharedCacheBase}/* $out
+
+            while IFS='|' read -r dep name; do
+              chmod +w $out/$dep
+cat > $out/$dep/registry.json <<EOF
+{
+  "name": "$name",
+  "dist-tags": {},
+  "versions": {}
+}
+EOF
+              while IFS= read -r ver; do
+                SUBSET_FILTER='to_entries | map(select(.key == "version" or .key == "bin" or .key == "dependencies" or .key == "peerDependencies")) | from_entries'
+                PACKAGE_SUBSET=$(${pkgs.jq}/bin/jq "$SUBSET_FILTER" $out/$dep/$ver/package.json)
+                 ${pkgs.jq}/bin/jq --arg version "$ver" --argjson subset "$PACKAGE_SUBSET" \
+                   '.versions[$version] = $subset' \
+                   $out/$dep/registry.json > $out/$dep/registry.json.tmp
+
+                mv $out/$dep/registry.json.tmp $out/$dep/registry.json
+              done < <(find $out/$dep -mindepth 1 -maxdepth 1 -type d | xargs -n1 basename)
+            done < <(echo "${builtins.concatStringsSep "\n" (map (d: "${d.cachePath}|${d.name}") allNpmDeps)}" | sort -u)
+
+            runHook postInstall
+          '';
 
       denoWithCache = { pkgs, baseDeno, sharedCache }:
         pkgs.writeShellScriptBin "deno" ''

@@ -1,5 +1,5 @@
 {
-  description = "Builds a shared cache for Deno packages based on lock files";
+  description = "Provides a Deno executable wrapper pointing to pre-built NPM dependency cache based on lock files";
 
   outputs = { ... }: {
     flakeModule = ./flake-module.nix;
